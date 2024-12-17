@@ -3,7 +3,7 @@ import pandas as pd
 import netCDF4 as nc
 from scipy.interpolate import interp1d
 
-
+#Absorption and Rayleigh scattering cross sections from VULCAN chemical kinetics program (Tsai et al., 2017)
 H2_absdat = '/data4/ananyo/models/C3M/data/VULCAN/H2/H2_cross.csv'
 He_absdat = '/data4/ananyo/models/C3M/data/VULCAN/He/He_cross.csv'
 H2_scatdat = '/data4/ananyo/models/C3M/data/VULCAN/rayleigh/H2_scat.txt'
@@ -157,12 +157,9 @@ H2 = [1.397E+20, 1.288E+20, 1.186E+20, 1.088E+20, 9.941E+19, 9.234E+19, 8.725E+1
  4.253E+09, 3.051E+09, 2.182E+09, 1.564E+09, 1.123E+09, 8.037E+08, 5.764E+08]
 
 
-#H = flip(array(Hgrid))
-#H2c = flip(array(H2))*1e6
-#Hc = flip(array(H))
-#Hec = flip(array(He))*1e6
 
-data = genfromtxt('data/Jupiter_UVS.txt')
+#Juno UVS extended atmospheric profile
+data = genfromtxt('../../data/Jupiter_UVS.txt')
 H = flip(data[:, 0]) #Km
 T0 = flip(data[:, 1]) #K
 P0 = flip(data[:, 2]) #barye
@@ -179,20 +176,10 @@ OP2 = (a2 + a4)
 OP5 = a5
 OP6 = a6
 
-#plot(w_sol/1e-9, a1 + a2  + a3  + a4, 'b-')
- #plot(w_sol/1e-9, a2, 'r-')
- #plot(w_sol/1e-9, a3, 'b--')
- #plot(w_sol/1e-9, a4, 'r--')
- #legend(['H2 abs', 'He abs', 'H2 scat', 'He scat'], loc = 'best')
-#xlabel('wavlength (nm)')
-#ylabel('cross (m^2)')
-#yscale('log')
-#xlim([0, 500])
-#show()
 
 
 #Read the wavelength grid from Liu 1995 H2 emission spectrum
-UV_dat = genfromtxt('UV_spec_Liu1995.txt')
+UV_dat = genfromtxt('../data/UV_spec_Liu1995.txt')
 wav_l = UV_dat[:, 0]*1e-10
 RI = UV_dat[:, 1]
 RI_max = max(RI)
@@ -211,17 +198,7 @@ inx = len(H)
 Odepth = zeros([ inx, len(a1)])
 UV_emission = zeros([ inx, len(a1)])
 inn = where(H <= 150)
-print(H[inn[0][0]], H[0])
 
-print(w_sol[500]/1e-10)
-print(w_sol[1000]/1e-10)
-#plot(Odepth[:, 500], H, 'k-')
-#plot(Odepth[:, 1000], H, 'k--')
-#xlabel('Optical depth')
-#ylabel('Altitude (km)')
-#xscale('log')
-#xlim([1e-3, 1e4])
-#legend(['550 A', '1050 A'], loc = 'best')
 fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
 
@@ -238,15 +215,6 @@ Nfunc = interp1d(H1, N1, fill_value=(0, 0), bounds_error=False)
 #Gerard heating rates
 print(H1)
 
-m2 = genfromtxt('data/Gerard_e_heating.txt')
-E2 = m2[:,0] #Electron heating rate (W/m^3)
-H2 = m2[:,1] #Height (km)
-
-
-m3 = genfromtxt('data/Gerard_H3p_cooling.txt')
-N3 = m3[:,0] #H3+ cooling rate (W/m^3)
-H3 = m3[:,1] #Height (km)
-
 #PLANETOCOSMICS heating rates
 m4 = genfromtxt('data/PLANETOCOSMICS_noBrhm.txt')
 H4 = m4[:, 0]
@@ -262,25 +230,17 @@ Tau = zeros(len(w_sol))
 
 for i in range(0, len(H) - 2):
    dz = (H[i] - H[i+1])*1e3
-   #print(H[i], H[i-1], dz)
    O1 = (H2c[i]*OP1*dz)
    O2 = (Hec[i]*OP2*dz)
    O5 = (CH4c[i]*OP5*dz)
    O6 = (C2H2c[i]*OP6*dz)
    Tau = Tau + (O1 + O2 + O5 + O6)
-   
-   #Tau = (trapz(flip(H2c)[i:], flip(H)[i:]*1e3)*OP1) + (trapz(flip(Hec)[i:], flip(H)[i:]*1e3)*OP2) + (trapz(flip(CH4c)[i:], flip(H)[i:]*1e3)*OP5) + (trapz(flip(C2H2c)[i:], flip(H)[i:]*1e3)*OP6)
-   #print(Tau)
-   #print(H[i])
    UV_prod1 = RI_new*N1_new[i]*UV_yield*w_sol*1e-4/(0.33*6.626e-34*3e8*1e6)
    UV_prod2 = RI_new*N1_new[i+1]*UV_yield*w_sol*1e-4/(0.33*6.626e-34*3e8*1e6)
    UV_prod = sqrt(UV_prod1*UV_prod2)
    UV_net = UV_prod*exp(-1*Tau)
-   #UV_net = where(nan , 0.0, UV_net)
    UV_net = where(UV_net < 0.0 , 0.0, UV_net)
    UV_emission[i, :] = UV_net
-   #Tau = where(Tau > 1e6 , nan, Tau)
-   #Tau = where(Tau < 1e-6, nan, Tau)
    Odepth[i, :] = Tau
 
 integral_UV = -1*trapz(UV_emission, H*1e3, axis=0)
@@ -316,29 +276,9 @@ ax.set_ylabel('Relative Intensity')
 ax.set_yscale('log')
 ax.legend(['TOA UV Emission (PJ7)', 'H$_{2}$ emission (Liu et al., 1995)'])
 ax.set_xlim([120, 160])
-savefig('figs/PJ7_UVEmission.png')
-#show()
+savefig('PJ7_UVEmission.png')
 
-'''
-contour_filled = ax.contourf(w_sol/1e-9, P0*1e-3, log10(UV_emission), levels = 5)
-contours = ax.contour(w_sol/1e-9, P0*1e-3, log10(UV_emission), levels = 5, colors='k', linewidths=0.5)
-cbar = colorbar(contour_filled, ax = ax, label = 'log$_{10}$(τ)')
-ax.set_ylabel('Pressure (mbar)')
-ax.set_xlabel('wavelength (nm)')
-ax.set_xlim([50, 250])
-ax.set_ylim([10, 1e-6])
-ax.set_yscale('log')
-ax1 = ax.twiny()
-ax1.plot(N1*100/(11.06),P1, 'b-')
-ax1.plot(Ev4, P4, 'C1')
-ax1.set_xlabel('Total energy deposition rate (W/m$^{3}$)')
-ax1.set_xscale('log')
-ax1.legend(['CSDA', 'Planetocosmics'], loc = 'best')
-show()
 
-#savefig('figs/PJ7_UVS_OD.png')
-
-'''
 
 
 
