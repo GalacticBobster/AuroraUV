@@ -204,7 +204,7 @@ fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
 #CSDA heating rates
 #Waite test: Jupiter-Auroral-Energy-Deposition/WaiteHR.txt
-m1 = genfromtxt('data/CSDA_Hrates.txt')
+m1 = genfromtxt('../../Jupiter-Auroral-Energy-Deposition/Hrates/Benmahi85keV.txt')
 H1 = m1[:,0] #Height (km)
 N1 = m1[:,1]*1.6e-19*1e6 #Neutral heating rate (eV/cm^3s)-> (W/m^3)
 E1 = m1[:,2]*1.6e-19*1e6 #Electron heating rate (eV/cm^3s)-> (W/m^3)
@@ -216,7 +216,7 @@ Nfunc = interp1d(H1, N1, fill_value=(0, 0), bounds_error=False)
 print(H1)
 
 #PLANETOCOSMICS heating rates
-m4 = genfromtxt('data/PLANETOCOSMICS_noBrhm.txt')
+m4 = genfromtxt('../../data/PLANETOCOSMICS_noBrhm.txt')
 H4 = m4[:, 0]
 E4 = m4[:, 1]
 g4 = m4[:, 2]
@@ -269,6 +269,7 @@ sum_Intensity = sum(integral_UV)/1e3
 print("color ratio: " + str(color_ratio))
 print("Total emission (kR) :" + str(trapz(integral_UV, w_sol/1e-9)/1e3 ))
 
+'''
 ax.plot(w_sol/1e-9, integral_UV/trapz(integral_UV, w_sol/1e-9), c = 'C1')
 ax.plot(w_sol/1e-9, RI_new, c = 'b')
 ax.set_xlabel('Wavelength (nm)')
@@ -277,7 +278,7 @@ ax.set_yscale('log')
 ax.legend(['TOA UV Emission (PJ7)', 'H$_{2}$ emission (Liu et al., 1995)'])
 ax.set_xlim([120, 160])
 savefig('PJ7_UVEmission.png')
-
+'''
 
 
 
